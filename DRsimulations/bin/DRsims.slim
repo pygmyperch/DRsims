@@ -1,0 +1,169 @@
+
+initialize() {
+	initializeMutationRate(1e-7);
+	initializeMutationType("m1", 0.5, "f", 0.0);
+	initializeMutationType("m2", 0.5, "f", 0.0);
+	initializeMutationType("m3", 0.5, "f", 0.0);
+	m2.color = "red";
+	m3.color = "green";
+	initializeGenomicElementType("g1", c(m1,m2,m3), c(0.95,0.025,0.025));
+	initializeGenomicElementType("g2", c(m1,m2,m3), c(0.95,0.025,0.025));
+	initializeGenomicElementType("g3", c(m1,m2,m3), c(0.95,0.025,0.025));
+	initializeGenomicElementType("g4", c(m1,m2,m3), c(0.95,0.025,0.025));
+	initializeGenomicElement(g1, 0, 99999);
+	initializeGenomicElement(g2, 100000, 199999);
+	initializeGenomicElement(g3, 200000, 299999);
+	initializeGenomicElement(g4, 300000, 399999);
+	initializeRecombinationRate(1e-8);
+	defineConstant("subpopCount", 3);
+	defineConstant("subpopNe", ne);
+	//defineConstant("path", "/scratch/user/brau0037/DE_sims/Ne500_S001_M05/");
+	
+	setSeed(getSeed());
+	catn("randomSeed: " + getSeed());
+}
+
+100000 late() {
+	
+	sim.setValue("Sneutral",1.00);
+	
+	sim.setValue("dry",subpopNe);
+	
+	sim.setValue("wet",subpopNe * 10.0);
+	
+	sim.setValue("S",sel);
+	sim.setValue("M",mig);
+	sim.setValue("clim",clim);
+	
+	writeFile(filePath=paste(c(path,"sim.meta")), contents=paste("new_sim: " + getSeed()), append = T);
+
+
+}
+
+
+
+100000 late() {
+	
+	sim.readFromPopulationFile("/scratch/user/brau0037/DE_sims/burnin2/100K_burnin_state.slim");
+
+}
+
+100001 {
+		sim.addSubpopSplit("p4", subpopNe, p1);
+		sim.addSubpopSplit("p5", subpopNe, p1);
+		sim.addSubpopSplit("p6", subpopNe, p1);
+			
+			}
+
+100002 {
+		p1.setSubpopulationSize(1);
+		p2.setSubpopulationSize(1);
+		p3.setSubpopulationSize(1);
+
+			}
+
+100002:100099 early() {
+
+		p4.setMigrationRates(c(p5,p6), c(0.5, 0.5));
+		p5.setMigrationRates(c(p4,p6), c(0.5, 0.5));
+		p6.setMigrationRates(c(p4,p5), c(0.5, 0.5));
+
+			}
+
+
+100100:120000 early() {
+
+		
+		
+	if (p4.individualCount > sim.getValue("dry"))
+	{
+		
+			
+			sim.setValue("M1",sim.getValue("M"));
+			sim.setValue("Spos",1.00);
+			sim.setValue("Sneg",1.00);
+		
+		
+		newSize = asInteger(p4.individualCount-(sim.getValue("wet")/3));
+		if (newSize < sim.getValue("dry"))
+		newSize = sim.getValue("dry");
+		p4.setSubpopulationSize(asInteger(newSize));
+		p5.setSubpopulationSize(asInteger(newSize));
+		p6.setSubpopulationSize(asInteger(newSize));
+	
+	
+	
+	}
+	
+	else
+	{
+		
+		//stable climate, wet years every 500 generations
+		if (sim.generation % sim.getValue("clim") != 0)
+		{
+			
+						
+			
+			sim.setValue("M1",0.0);
+			sim.setValue("Spos",sim.getValue("S"));
+			sim.setValue("Sneg",0.999);
+
+			
+			p4.setSubpopulationSize(asInteger(sim.getValue("dry")));
+			p5.setSubpopulationSize(asInteger(sim.getValue("dry")));
+			p6.setSubpopulationSize(asInteger(sim.getValue("dry")));
+
+					
+		
+		}
+		
+		
+		
+		else
+		{
+			
+			sim.setValue("M1",sim.getValue("M"));
+			sim.setValue("Spos",1.00);
+			sim.setValue("Sneg",1.00);
+
+			sim.setValue("wet_year", sim.generation);
+			writeFile(filePath=paste(c(path,"sim.meta")), contents=paste(sim.getValue("wet_year")), append = T);
+			
+			p4.setSubpopulationSize(asInteger(sim.getValue("wet")));
+			p5.setSubpopulationSize(asInteger(sim.getValue("wet")));
+			p6.setSubpopulationSize(asInteger(sim.getValue("wet")));
+
+					
+		}
+		
+		
+		p4.setMigrationRates(c(p5,p6), c(sim.getValue("M1"), sim.getValue("M1")));
+		p5.setMigrationRates(c(p4,p6), c(sim.getValue("M1"), sim.getValue("M1")));
+		p6.setMigrationRates(c(p4,p5), c(sim.getValue("M1"), sim.getValue("M1")));
+			
+
+	
+	}
+
+}
+
+
+
+100100:	fitness(m2,p4) { return sim.getValue("Spos"); }
+
+
+
+100100:120000 late(){
+	if (sim.generation % 100 != 0) return;
+	allIndividuals = sim.subpopulations.individuals;
+	sampledP1 = sample(p4.individuals, 50);
+	sampledP2 = sample(p5.individuals, 50);
+	sampledP3 = sample(p6.individuals, 50);
+	sampledIndividuals = c(sampledP1, sampledP2, sampledP3);
+	sampledIndividuals.genomes.outputVCF(filePath=paste(c(path,sim.generation,".vcf")),outputMultiallelics = F, append = T);
+
+
+
+}
+
+
