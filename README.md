@@ -13,7 +13,8 @@ The top directory DRsimulations/ contains shell scripts to run replicates for ea
 and bin/ that contains functions and scripts used to run SLiM, process the data and generate the figures<br />
 
 \
-cd into DRsimulations/ 
+cd into DRsimulations/<br />
+unzip the binary file specifying the starting conditions for each simulation (after the burnin)
 
 ```
 gunzip bin/100K_burnin_state.slim.gz
