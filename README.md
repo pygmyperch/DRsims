@@ -7,12 +7,21 @@
 
 Download the repo [here](https://github.com/pygmyperch/DRsims/archive/master.zip)
 
+
 \
 The top directory DRsimulations/ contains shell scripts to run replicates for each simulation model,<br />
 and bin/ that contains functions and scripts used to run SLiM, process the data and generate the figures<br />
 
 \
-cd into DRsimulations/ then simply run:
+cd into DRsimulations/ 
+
+```
+gunzip bin/100K_burnin_state.slim.gz
+
+```
+
+
+then simply run:
 
 ```
 ./run_NeXXX_SXX_MXX_CXXX.sh
